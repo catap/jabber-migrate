@@ -1,7 +1,9 @@
 package cz.rdc.devel.jabber.migrate;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Contact information holder.
@@ -11,7 +13,7 @@ public class Contact {
     private boolean remove;
     private String nickname;
     private String user;
-    private List<String> groups = new ArrayList<String>(1);
+    private Set<String> groups = new HashSet<>();
 
     public void addGroup(String group) {
         groups.add(group);

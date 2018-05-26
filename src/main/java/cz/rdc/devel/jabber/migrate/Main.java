@@ -45,6 +45,10 @@ public class Main {
             metaVar="PATH", usage="Roster file path (default is stdout/stdin)")
     private String file;
 
+    @Option(name="-a", aliases="--adium",
+        usage="Roster file path in Adium (blist.xml) format, import only (default is off)")
+    private boolean adiumFormat;
+
     @Option(name="--help", usage="Show help")
     private boolean help;
 
@@ -75,7 +79,7 @@ public class Main {
             command = new RosterGet(IOSupport.createOutput(file));
 
         } else if (mode.contains("import")) {
-            command = new RosterPut(IOSupport.createInput(file));
+            command = new RosterPut(IOSupport.createInput(file), adiumFormat);
 
         } else {
             LOG.error("Unknown mode: " + mode.get(0));

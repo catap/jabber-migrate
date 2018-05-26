@@ -7,13 +7,17 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jxmpp.jid.impl.JidCreate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Puts contacts to a roster.
@@ -24,8 +28,11 @@ public class RosterPut implements Command {
 
     private BufferedReader in;
 
-    public RosterPut(BufferedReader in) {
+    private boolean adiumFormat;
+
+    public RosterPut(BufferedReader in, boolean adiumFormat) {
         this.in = in;
+        this.adiumFormat = adiumFormat;
     }
 
     /**
@@ -42,7 +49,7 @@ public class RosterPut implements Command {
             roster.reloadAndWait();
         }
 
-        List<Contact> contacts = parseContacts();
+        Collection<Contact> contacts = parseContacts();
         for (Contact contact : contacts) {
             if (contact.isRemove()) {
                 LOG.info("Removing contact: {}", contact);
@@ -64,7 +71,7 @@ public class RosterPut implements Command {
      * See the issue: http://www.jivesoftware.org/issues/browse/SMACK-10
      */
     @SuppressWarnings("unchecked")
-    private void waitForRosterUpdate(Roster roster, List<Contact> contacts) throws InterruptedException, SmackException.NotLoggedInException, SmackException.NotConnectedException {
+    private void waitForRosterUpdate(Roster roster, Collection<Contact> contacts) throws InterruptedException, SmackException.NotLoggedInException, SmackException.NotConnectedException {
         Set<String> newUsers = new HashSet<String>();
         for (Contact contact : contacts) {
             if (!contact.isRemove()) {
@@ -83,7 +90,10 @@ public class RosterPut implements Command {
         }
     }
 
-    private List<Contact> parseContacts() throws IOException {
+    private Collection<Contact> parseContacts() throws Exception {
+        if (adiumFormat) {
+            return parseAdiumContacts();
+        }
         List<Contact> contacts = new ArrayList<Contact>();
 
         String line;
@@ -104,5 +114,39 @@ public class RosterPut implements Command {
             contacts.add(contact);
         }
         return contacts;
+    }
+
+    private Collection<Contact> parseAdiumContacts() throws Exception  {
+        Document document = DocumentBuilderFactory.newInstance()
+            .newDocumentBuilder()
+            .parse(new InputSource(in));
+
+        Map<String, Contact> contactMap = new HashMap<>();
+        XPath xPath =  XPathFactory.newInstance().newXPath();
+
+        NodeList groups = (NodeList) xPath.evaluate("/purple/blist/group", document, XPathConstants.NODESET);
+        for (int i = 0; i < groups.getLength(); i++) {
+            Node group = groups.item(i);
+            String groupName = (String) xPath.evaluate("@name", group, XPathConstants.STRING);
+            NodeList buddies = (NodeList) xPath.evaluate("contact/buddy[@proto='prpl-jabber']", group, XPathConstants.NODESET);
+            for (int j = 0; j < buddies.getLength(); j++) {
+                Node buddy = buddies.item(j);
+                String jid = (String) xPath.evaluate("name", buddy, XPathConstants.STRING);
+                String alias = (String) xPath.evaluate("alias", buddy, XPathConstants.STRING);
+                Contact contact = contactMap.computeIfAbsent(jid, (a) -> new Contact());
+                contact.setUser(jid);
+                contact.setNickname(alias);
+                contact.setRemove(false);
+                if (groupName != null) {
+                    contact.addGroup(groupName);
+                }
+            }
+        }
+
+        if (contactMap.isEmpty()) {
+            LOG.error("Incorrect format or it doesn't contain any buddy");
+        }
+
+        return contactMap.values();
     }
 }

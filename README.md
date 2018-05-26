@@ -20,6 +20,8 @@ Usage
 
      MODE                 : export, or import
      --help               : Show help
+     -a (--adium)         : Roster file path in Adium (blist.xml) format, import
+                            only (default is off)
      -f (--file) PATH     : Roster file path (default is stdout/stdin)
      -h (--host) HOST     : Server hostname (default is same as service name)
      -p (--port) PORT     : Server port (default is 5222)
@@ -59,6 +61,12 @@ Examples:
     -;alien;123@icq;[]
     +;alien;123@icq.netlab.cz;[Sales,Travel]
 
+Import from Adium
+-----------------
+
+If you would like to import your old contacts from adium to new jabber server, you can use this tools by
+
+    $ ./bin/roster-migrate import -u flynn -s jabbim.cz -w top-secret -a -f ~/Library/Application\ Support/Adium\ 2.0/Users/Default/Contact\ List.plist
 
 Origin
 ------
