@@ -1,9 +1,11 @@
 package cz.rdc.devel.jabber.migrate;
 
 import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.XMPPConnection;
+import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +51,9 @@ public class RosterPut implements Command {
             roster.reloadAndWait();
         }
 
+        Set<BareJid> modified = new HashSet<>();
         Collection<Contact> contacts = parseContacts();
+        boolean isSubscriptionPreApprovalSupported = roster.isSubscriptionPreApprovalSupported();
         for (Contact contact : contacts) {
             if (contact.isRemove()) {
                 LOG.info("Removing contact: {}", contact);
@@ -59,11 +63,29 @@ public class RosterPut implements Command {
                 }
             } else {
                 LOG.info("Importing contact: {}", contact);
-                roster.createEntry(JidCreate.bareFrom(contact.getUser()), contact.getNickname(), contact.getGroups());
+                BareJid jid = JidCreate.bareFrom(contact.getUser());
+                if (isSubscriptionPreApprovalSupported) {
+                    roster.preApproveAndCreateEntry(jid, contact.getNickname(), contact.getGroups());
+                } else {
+                    roster.createEntry(jid, contact.getNickname(), contact.getGroups());
+                }
+                modified.add(jid);
             }
         }
 
         waitForRosterUpdate(roster, contacts);
+
+        if (!modified.isEmpty()) {
+            for (BareJid jid : modified) {
+                RosterEntry entry = roster.getEntry(jid);
+                if (!entry.canSeeHisPresence() || !isSubscriptionPreApprovalSupported) {
+                    LOG.info("Sending auth request to: {}", jid.toString());
+                    roster.sendSubscriptionRequest(jid);
+                    // if we're send presence sleep for 1 seconds to overstep antispam on major hosting
+                    Thread.sleep(1000);
+                }
+            }
+        }
     }
 
     /**
