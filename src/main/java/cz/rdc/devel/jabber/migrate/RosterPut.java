@@ -1,8 +1,10 @@
 package cz.rdc.devel.jabber.migrate;
 
-import org.jivesoftware.smack.Roster;
-import org.jivesoftware.smack.RosterEntry;
+import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.roster.Roster;
+import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.XMPPConnection;
+import org.jxmpp.jid.impl.JidCreate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,19 +36,23 @@ public class RosterPut implements Command {
      * nickname;user;[group,group,...]
      */
     public void work(XMPPConnection con) throws Exception {
-        Roster roster = con.getRoster();
+        Roster roster = Roster.getInstanceFor(con);
+
+        if (!roster.isLoaded()) {
+            roster.reloadAndWait();
+        }
 
         List<Contact> contacts = parseContacts();
         for (Contact contact : contacts) {
             if (contact.isRemove()) {
                 LOG.info("Removing contact: {}", contact);
-                RosterEntry entry = roster.getEntry(contact.getUser());
+                RosterEntry entry = roster.getEntry(JidCreate.bareFrom(contact.getUser()));
                 if (entry != null) {
                     roster.removeEntry(entry);
                 }
             } else {
                 LOG.info("Importing contact: {}", contact);
-                roster.createEntry(contact.getUser(), contact.getNickname(), contact.getGroups());
+                roster.createEntry(JidCreate.bareFrom(contact.getUser()), contact.getNickname(), contact.getGroups());
             }
         }
 
@@ -58,7 +64,7 @@ public class RosterPut implements Command {
      * See the issue: http://www.jivesoftware.org/issues/browse/SMACK-10
      */
     @SuppressWarnings("unchecked")
-    private void waitForRosterUpdate(Roster roster, List<Contact> contacts) throws InterruptedException {
+    private void waitForRosterUpdate(Roster roster, List<Contact> contacts) throws InterruptedException, SmackException.NotLoggedInException, SmackException.NotConnectedException {
         Set<String> newUsers = new HashSet<String>();
         for (Contact contact : contacts) {
             if (!contact.isRemove()) {
@@ -67,13 +73,13 @@ public class RosterPut implements Command {
         }
 
         while (newUsers.size() > 0) {
+            roster.reloadAndWait();
             for (RosterEntry entry : roster.getEntries()) {
                 newUsers.remove(entry.getUser());
             }
 
             LOG.info("Waiting for roster update: {}/{}",
                     contacts.size() - newUsers.size(), contacts.size());
-            Thread.sleep(1000);
         }
     }
 

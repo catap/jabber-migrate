@@ -1,10 +1,13 @@
 package cz.rdc.devel.jabber.migrate;
 
 import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smackx.ping.PingManager;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +15,7 @@ import java.util.List;
 import static java.lang.System.*;
 
 public class Main {
+    private static final Logger LOG = LoggerFactory.getLogger(RosterPut.class);
 
     @Argument(required=true,
              metaVar="MODE", usage="export, or import")
@@ -61,7 +65,7 @@ public class Main {
                 printUsage(parser);
                 exit(0);
             } else {
-                err.println("Error: " + ex.getMessage());
+                LOG.error("Error: " + ex.getMessage());
                 exit(1);
             }
         }
@@ -74,11 +78,15 @@ public class Main {
             command = new RosterPut(IOSupport.createInput(file));
 
         } else {
-            err.println("Unknown mode: " + mode.get(0));
+            LOG.error("Unknown mode: " + mode.get(0));
             exit(1);
         }
 
         XMPPConnection conn = XMPPConnectionFactory.connectAndLogin(username, serviceName, password, host, port);
+        PingManager pm = PingManager.getInstanceFor(conn);
+        pm.setPingInterval(5);
+        pm.pingMyServer();
+        pm.registerPingFailedListener(() -> LOG.error("pingFailed"));
         command.work(conn);
     }
 

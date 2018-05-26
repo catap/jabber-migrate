@@ -24,7 +24,7 @@
     <!--//////////////////// PROPERTIES ////////////////////-->
 
     <properties>
-        <java.source.version>1.6</java.source.version>
+        <java.source.version>1.8</java.source.version>
     </properties>
 
 
@@ -33,14 +33,32 @@
     <dependencies>
         <dependency>
             <groupId>org.igniterealtime.smack</groupId>
-            <artifactId>smack</artifactId>
-            <version>3.2.1</version>
+            <artifactId>smack-tcp</artifactId>
+            <version>4.2.4</version>
         </dependency>
 
         <dependency>
             <groupId>org.igniterealtime.smack</groupId>
-            <artifactId>smackx</artifactId>
-            <version>3.2.1</version>
+            <artifactId>smack-sasl-javax</artifactId>
+            <version>4.2.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.igniterealtime.smack</groupId>
+            <artifactId>smack-resolver-javax</artifactId>
+            <version>4.2.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.igniterealtime.smack</groupId>
+            <artifactId>smack-im</artifactId>
+            <version>4.2.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.igniterealtime.smack</groupId>
+            <artifactId>smack-extensions</artifactId>
+            <version>4.2.4</version>
         </dependency>
 
         <dependency>
