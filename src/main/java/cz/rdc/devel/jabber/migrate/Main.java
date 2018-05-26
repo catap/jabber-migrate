@@ -45,7 +45,7 @@ public class Main {
             metaVar="PATH", usage="Roster file path (default is stdout/stdin)")
     private String file;
 
-    @Option(name="-a", aliases="--adium",
+    @Option(name="--adium",
         usage="Roster file path in Adium (blist.xml) format, import only (default is off)")
     private boolean adiumFormat;
 

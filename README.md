@@ -20,7 +20,7 @@ Usage
 
      MODE                 : export, or import
      --help               : Show help
-     -a (--adium)         : Roster file path in Adium (blist.xml) format, import
+     --adium              : Roster file path in Adium (blist.xml) format, import
                             only (default is off)
      -f (--file) PATH     : Roster file path (default is stdout/stdin)
      -h (--host) HOST     : Server hostname (default is same as service name)
