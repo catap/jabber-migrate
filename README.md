@@ -19,9 +19,11 @@ Usage
     $ ./bin/roster-migrate MODE <options>
 
      MODE                 : export, or import
-     --help               : Show help
      --adium              : Roster file path in Adium (blist.xml) format, import
                             only (default is off)
+     --help               : Show help
+     --onlyUnreachable    : Creates a dump to remove all users that can't be reach
+                            anymore, only export (default is off)
      -f (--file) PATH     : Roster file path (default is stdout/stdin)
      -h (--host) HOST     : Server hostname (default is same as service name)
      -p (--port) PORT     : Server port (default is 5222)
@@ -67,6 +69,22 @@ Import from Adium
 If you would like to import your old contacts from adium to new jabber server, you can use this tools by
 
     $ ./bin/roster-migrate import -u flynn -s jabbim.cz -w top-secret -a -f ~/Library/Application\ Support/Adium\ 2.0/Users/Default/Contact\ List.plist
+
+Cleanup roster
+--------------
+
+For last time a lot of services shutdown their s2s (for example gmail, ya.ru and many on them).
+This tools also provide an easy way to create a list of users that may be removed because they are unreachable.
+
+    $ ./bin/roster-migrate export -u kevin@flynn.com -s flynn.com --onlyUnreachable -w top-secret -h jabber.org -f export.txt
+
+Unreachable domain means:
+ - hasn't got any reachable address (over SRV records or direct connect to 5269)
+ - your servers returned error that remote-server-not-found
+
+Unreachable JID means:
+ - your server's returned error that recipient-unavailable
+ - domain is reachable and script can register JID on it
 
 Origin
 ------

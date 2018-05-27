@@ -49,6 +49,10 @@ public class Main {
         usage="Roster file path in Adium (blist.xml) format, import only (default is off)")
     private boolean adiumFormat;
 
+    @Option(name="--onlyUnreachable",
+        usage="Creates a list fo users that can't be reach anymore, only export (default is off)")
+    private boolean onlyUnreachable;
+
     @Option(name="--help", usage="Show help")
     private boolean help;
 
@@ -76,7 +80,7 @@ public class Main {
 
         Command command = null;
         if (mode.contains("export")) {
-            command = new RosterGet(IOSupport.createOutput(file));
+            command = new RosterGet(IOSupport.createOutput(file), onlyUnreachable);
 
         } else if (mode.contains("import")) {
             command = new RosterPut(IOSupport.createInput(file), adiumFormat);

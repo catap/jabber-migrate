@@ -4,19 +4,25 @@ import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.stringencoder.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
 public class XMPPConnectionFactory {
 
-    public static XMPPConnection connectAndLogin(
-            String username, String serviceName, String password, String host, int port) throws IOException, InterruptedException, XMPPException, SmackException {
+    private static final Logger LOG = LoggerFactory.getLogger(XMPPConnectionFactory.class);
 
-        if (host == null || host.isEmpty()) {
-            host = serviceName;
-        }
+    private static SSLContext sslContext = null;
 
+    static {
         Base64.setEncoder(new Base64.Encoder() {
             @Override
             public byte[] decode(String string) {
@@ -39,12 +45,43 @@ public class XMPPConnectionFactory {
             }
         });
 
+        TrustManager[] trustAllCerts = new TrustManager[] {
+            new X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[0];
+                }
+                public void checkClientTrusted(
+                    java.security.cert.X509Certificate[] certs, String authType) {
+                }
+                public void checkServerTrusted(
+                    java.security.cert.X509Certificate[] certs, String authType) {
+                }
+            }
+        };
+
+        try {
+            sslContext = SSLContext.getInstance("SSL");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            LOG.error("Can't create SSL context that will trust any certificate: " + e.getMessage(), e);
+        }
+    }
+
+    public static XMPPConnection connectAndLogin(
+            String username, String serviceName, String password, String host, int port) throws IOException, InterruptedException, XMPPException, SmackException {
+
+        if (host == null || host.isEmpty()) {
+            host = serviceName;
+        }
+
+
         XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
             .setHost(host)
             .setPort(port)
             .setXmppDomain(serviceName)
             .setSecurityMode(ConnectionConfiguration.SecurityMode.ifpossible)
             .setHostnameVerifier((s, sslSession) -> true)
+            .setCustomSSLContext(sslContext)
             .build();
 
         AbstractXMPPConnection conn = new XMPPTCPConnection(config)
@@ -53,5 +90,17 @@ public class XMPPConnectionFactory {
         conn.login(username, password);
 
         return conn;
+    }
+
+    public static AbstractXMPPConnection connect(String serviceName) throws IOException, InterruptedException, XMPPException, SmackException {
+        XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
+            .setXmppDomain(serviceName)
+            .setSecurityMode(ConnectionConfiguration.SecurityMode.ifpossible)
+            .setHostnameVerifier((s, sslSession) -> true)
+            .setCustomSSLContext(sslContext)
+            .build();
+
+        return new XMPPTCPConnection(config)
+            .connect();
     }
 }
