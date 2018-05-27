@@ -1,5 +1,7 @@
 package cz.rdc.devel.jabber.migrate;
 
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
@@ -27,18 +29,17 @@ import java.util.*;
 /**
  * Exports contacts from a roster.
  */
-public class RosterGet implements Command {
-
+@Parameters(commandDescription = "Export roster into specified file")
+public class RosterGet {
     private static final Logger LOG = LoggerFactory.getLogger(RosterGet.class);
 
-    private PrintStream out;
+    @Parameter(names = {"-f", "--file"},
+        description = "Roster file path by default is stdout/stdin")
+    private String file;
 
+    @Parameter(names = {"--onlyUnreachable"},
+        description = "Creates a list of users that can't be reach anymore")
     private boolean onlyUnreachable;
-
-    public RosterGet(PrintStream out, boolean onlyUnreachable) {
-        this.out = out;
-        this.onlyUnreachable = onlyUnreachable;
-    }
 
     @SuppressWarnings("unchecked")
     public void work(XMPPConnection con) throws Exception {
@@ -53,6 +54,8 @@ public class RosterGet implements Command {
 
         Set<RosterEntry> rosterEntries = roster.getEntries();
         int passed = 0;
+
+        PrintStream out = IOSupport.createOutput(file);
 
         for (RosterEntry entry : rosterEntries) {
             passed++;

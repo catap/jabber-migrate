@@ -1,10 +1,11 @@
 package cz.rdc.devel.jabber.migrate;
 
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import org.jivesoftware.smack.SmackException;
-import org.jivesoftware.smack.packet.Presence;
+import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
-import org.jivesoftware.smack.XMPPConnection;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.slf4j.Logger;
@@ -24,18 +25,18 @@ import java.util.*;
 /**
  * Puts contacts to a roster.
  */
-public class RosterPut implements Command {
+@Parameters(commandDescription = "Import existed file into roster")
+public class RosterPut {
 
     private static final Logger LOG = LoggerFactory.getLogger(RosterPut.class);
 
-    private BufferedReader in;
+    @Parameter(names = {"-f", "--file"},
+        description = "Roster file path by default is stdout/stdin")
+    private String file;
 
+    @Parameter(names = {"--adium"},
+        description = "Roster file in Adium (blist.xml) format")
     private boolean adiumFormat;
-
-    public RosterPut(BufferedReader in, boolean adiumFormat) {
-        this.in = in;
-        this.adiumFormat = adiumFormat;
-    }
 
     /**
      * Imports contact to the new roster.
@@ -113,8 +114,9 @@ public class RosterPut implements Command {
     }
 
     private Collection<Contact> parseContacts() throws Exception {
+        BufferedReader in = IOSupport.createInput(file);
         if (adiumFormat) {
-            return parseAdiumContacts();
+            return parseAdiumContacts(in);
         }
         List<Contact> contacts = new ArrayList<Contact>();
 
@@ -138,7 +140,7 @@ public class RosterPut implements Command {
         return contacts;
     }
 
-    private Collection<Contact> parseAdiumContacts() throws Exception  {
+    private Collection<Contact> parseAdiumContacts(BufferedReader in) throws Exception  {
         Document document = DocumentBuilderFactory.newInstance()
             .newDocumentBuilder()
             .parse(new InputSource(in));

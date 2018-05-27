@@ -16,31 +16,48 @@ If you want to use `roster-migrate` shell script, then you’ll also need some P
 Usage
 -----
 
-    $ ./bin/roster-migrate MODE <options>
-
-     MODE                 : export, or import
-     --adium              : Roster file path in Adium (blist.xml) format, import
-                            only (default is off)
-     --help               : Show help
-     --onlyUnreachable    : Creates a list fo users that can't be reach anymore,
-                            only export (default is off)
-     -f (--file) PATH     : Roster file path (default is stdout/stdin)
-     -h (--host) HOST     : Server hostname (default is using SRV record)
-     -p (--port) PORT     : Server port if server specified (default is 5222)
-     -s (--service) HOST  : Service (domain) name; the portion of JID after at (@)
-                            sign.
-     -u (--username) NAME : Username; usually the portion of JID before at (@)
-                            sign, but some severs uses whole JID as an username.
-     -w (--password) PASS : Password
+    Usage: roster-migrate [options] [command] [command options]
+      Options:
+        --help, -H
+          Display help
+        --host, --H
+          Host to overwrite value from SRV records
+      * --jid, -j
+          JID to perform an action
+      * --password, -w
+          password to connect as provided JID
+        --port, -p
+          Port that will be used when host is overwritten from SRV records
+          Default: 5222
+      Commands:
+        import      Import existed file into roster
+          Usage: import [options]
+            Options:
+              --adium
+                Roster file in Adium (blist.xml) format
+                Default: false
+              -f, --file
+                Roster file path by default is stdout/stdin
+    
+        export      Export roster into specified file
+          Usage: export [options]
+            Options:
+              -f, --file
+                Roster file path by default is stdout/stdin
+              --onlyUnreachable
+                Creates a list of users that can't be reach anymore
+                Default: false
 
 Roster export:
 
-    $ ./bin/roster-migrate export -u kevin@flynn.com -s flynn.com -w top-secret -f export.txt
+    $ ./bin/roster-migrate --jid test@jabber.org -w export -f export.txt
 
 Roster import:
 
-    $ ./bin/roster-migrate import -u flynn -s jabbim.cz -w top-secret < export.txt
+    $ ./bin/roster-migrate --jid test@jabber.org -w import -f export.txt
 
+If you would like yo you stdin as source of roster you should define a password as `-w` optional argument
+ or put it as first line inside `export.txt` and yous `... import < export.txt`
 
 
 Import/export format
@@ -68,7 +85,7 @@ Import from Adium
 
 If you would like to import your old contacts from adium to new jabber server, you can use this tools by
 
-    $ ./bin/roster-migrate import -u flynn -s jabbim.cz -w top-secret -a -f ~/Library/Application\ Support/Adium\ 2.0/Users/Default/Contact\ List.plist
+    $ ./bin/roster-migrate --jid test@jabber.org -w import --adium -f ~/Library/Application\ Support/Adium\ 2.0/Users/Default/Contact\ List.plist
 
 Cleanup roster
 --------------
@@ -76,7 +93,7 @@ Cleanup roster
 For last time a lot of services shutdown their s2s (for example gmail, ya.ru and many on them).
 This tools also provide an easy way to create a list of users that may be removed because they are unreachable.
 
-    $ ./bin/roster-migrate export -u kevin@flynn.com -s flynn.com --onlyUnreachable -w top-secret -f export.txt
+    $ ./bin/roster-migrate --jid test@jabber.org -w export --onlyUnreachable -f export.txt
 
 Unreachable domain means:
  - hasn't got any reachable address (over SRV records or direct connect to 5269)

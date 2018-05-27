@@ -1,10 +1,17 @@
 package cz.rdc.devel.jabber.migrate;
 
+import com.beust.jcommander.IParameterValidator;
+import com.beust.jcommander.IStringConverter;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.stringencoder.Base64;
 import org.jivesoftware.smackx.ping.PingManager;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.stringprep.XmppStringprepException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +75,47 @@ public class XMPPConnectionFactory {
         }
     }
 
-    public static XMPPConnection connectAndLogin(String username, String serviceName, String password, String host, Integer port) throws IOException, InterruptedException, XMPPException, SmackException {
+    public static class String2BareJidValidate implements IParameterValidator {
+        @Override
+        public void validate(String name, String value) throws ParameterException {
+            try {
+                JidCreate.bareFrom(value);
+            } catch (XmppStringprepException e) {
+                throw new ParameterException(e.getCausingString());
+            }
+        }
+    }
+
+    public static class String2BareJid implements IStringConverter<BareJid> {
+        @Override
+        public BareJid convert(String value) {
+            try {
+                return JidCreate.bareFrom(value);
+            } catch (XmppStringprepException e) {
+                // never happened
+                return null;
+            }
+        }
+    }
+
+    @Parameter(names = {"--jid", "-j"}, required = true,
+        converter = String2BareJid.class, validateWith = String2BareJidValidate.class,
+        description = "JID to perform an action")
+    public BareJid jid;
+
+    @Parameter(names = {"--password", "-w"},
+        description = "password to connect as provided JID", password = true, required = true)
+    public String password;
+
+    @Parameter(names = {"--host", "--H"},
+        description = "Host to overwrite value from SRV records")
+    public String host;
+
+    @Parameter(names = {"--port", "-p"},
+        description = "Port that will be used when host is overwritten from SRV records")
+    public int port = 5222;
+
+    public AbstractXMPPConnection connectAndLogin() throws IOException, InterruptedException, XMPPException, SmackException {
         XMPPTCPConnectionConfiguration.Builder builder = XMPPTCPConnectionConfiguration.builder();
 
         if (host == null || host.isEmpty()) {
@@ -78,7 +125,7 @@ public class XMPPConnectionFactory {
         }
 
         XMPPTCPConnectionConfiguration config = builder
-            .setXmppDomain(serviceName)
+            .setXmppDomain(jid.getDomain().toString())
             .setSecurityMode(ConnectionConfiguration.SecurityMode.ifpossible)
             .setHostnameVerifier((s, sslSession) -> true)
             .setCustomSSLContext(sslContext)
@@ -87,14 +134,19 @@ public class XMPPConnectionFactory {
         AbstractXMPPConnection conn = new XMPPTCPConnection(config)
             .connect();
 
-        conn.login(username, password);
+        try {
+            conn.login(jid.getLocalpartOrNull(), password);
 
-        PingManager pm = PingManager.getInstanceFor(conn);
-        pm.setPingInterval(5);
-        pm.pingMyServer();
-        pm.registerPingFailedListener(() -> LOG.error("pingFailed"));
+            PingManager pm = PingManager.getInstanceFor(conn);
+            pm.setPingInterval(5);
+            pm.pingMyServer();
+            pm.registerPingFailedListener(() -> LOG.error("pingFailed"));
 
-        return conn;
+            return conn;
+        } catch (IOException | InterruptedException | XMPPException | SmackException e) {
+            conn.disconnect();
+            throw e;
+        }
     }
 
     public static AbstractXMPPConnection connect(String serviceName) throws IOException, InterruptedException, XMPPException, SmackException {
