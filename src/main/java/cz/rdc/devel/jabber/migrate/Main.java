@@ -34,11 +34,11 @@ public class Main {
     private String password;
 
     @Option(name="-h", aliases="--host", metaVar="HOST",
-            usage="Server hostname (default is same as service name)")
+            usage="Server hostname (default is using SRV record)")
     private String host;
 
     @Option(name="-p", aliases="--port",
-            metaVar="PORT", usage="Server port (default is 5222)")
+            metaVar="PORT", usage="Server port if server specified (default is 5222)")
     private int port = 5222;
 
     @Option(name="-f", aliases="--file",
@@ -91,10 +91,6 @@ public class Main {
         }
 
         XMPPConnection conn = XMPPConnectionFactory.connectAndLogin(username, serviceName, password, host, port);
-        PingManager pm = PingManager.getInstanceFor(conn);
-        pm.setPingInterval(5);
-        pm.pingMyServer();
-        pm.registerPingFailedListener(() -> LOG.error("pingFailed"));
         command.work(conn);
     }
 

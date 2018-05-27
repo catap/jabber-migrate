@@ -22,11 +22,11 @@ Usage
      --adium              : Roster file path in Adium (blist.xml) format, import
                             only (default is off)
      --help               : Show help
-     --onlyUnreachable    : Creates a dump to remove all users that can't be reach
-                            anymore, only export (default is off)
+     --onlyUnreachable    : Creates a list fo users that can't be reach anymore,
+                            only export (default is off)
      -f (--file) PATH     : Roster file path (default is stdout/stdin)
-     -h (--host) HOST     : Server hostname (default is same as service name)
-     -p (--port) PORT     : Server port (default is 5222)
+     -h (--host) HOST     : Server hostname (default is using SRV record)
+     -p (--port) PORT     : Server port if server specified (default is 5222)
      -s (--service) HOST  : Service (domain) name; the portion of JID after at (@)
                             sign.
      -u (--username) NAME : Username; usually the portion of JID before at (@)
@@ -35,7 +35,7 @@ Usage
 
 Roster export:
 
-    $ ./bin/roster-migrate export -u kevin@flynn.com -s flynn.com -w top-secret -h talk.google.com -f export.txt
+    $ ./bin/roster-migrate export -u kevin@flynn.com -s flynn.com -w top-secret -f export.txt
 
 Roster import:
 
@@ -76,7 +76,7 @@ Cleanup roster
 For last time a lot of services shutdown their s2s (for example gmail, ya.ru and many on them).
 This tools also provide an easy way to create a list of users that may be removed because they are unreachable.
 
-    $ ./bin/roster-migrate export -u kevin@flynn.com -s flynn.com --onlyUnreachable -w top-secret -h jabber.org -f export.txt
+    $ ./bin/roster-migrate export -u kevin@flynn.com -s flynn.com --onlyUnreachable -w top-secret -f export.txt
 
 Unreachable domain means:
  - hasn't got any reachable address (over SRV records or direct connect to 5269)

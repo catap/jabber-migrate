@@ -4,6 +4,7 @@ import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.stringencoder.Base64;
+import org.jivesoftware.smackx.ping.PingManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,17 +68,16 @@ public class XMPPConnectionFactory {
         }
     }
 
-    public static XMPPConnection connectAndLogin(
-            String username, String serviceName, String password, String host, int port) throws IOException, InterruptedException, XMPPException, SmackException {
+    public static XMPPConnection connectAndLogin(String username, String serviceName, String password, String host, Integer port) throws IOException, InterruptedException, XMPPException, SmackException {
+        XMPPTCPConnectionConfiguration.Builder builder = XMPPTCPConnectionConfiguration.builder();
 
         if (host == null || host.isEmpty()) {
-            host = serviceName;
+            builder = builder
+                .setHost(host)
+                .setPort(port);
         }
 
-
-        XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
-            .setHost(host)
-            .setPort(port)
+        XMPPTCPConnectionConfiguration config = builder
             .setXmppDomain(serviceName)
             .setSecurityMode(ConnectionConfiguration.SecurityMode.ifpossible)
             .setHostnameVerifier((s, sslSession) -> true)
@@ -88,6 +88,11 @@ public class XMPPConnectionFactory {
             .connect();
 
         conn.login(username, password);
+
+        PingManager pm = PingManager.getInstanceFor(conn);
+        pm.setPingInterval(5);
+        pm.pingMyServer();
+        pm.registerPingFailedListener(() -> LOG.error("pingFailed"));
 
         return conn;
     }
