@@ -16,7 +16,7 @@
     <groupId>cz.jirutka.jabber</groupId>
     <artifactId>roster-migrate</artifactId>
     <packaging>jar</packaging>
-    <version>0.6</version>
+    <version>0.7</version>
 
     <name>roster-migrate</name>
 
