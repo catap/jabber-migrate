@@ -57,7 +57,7 @@ Roster import:
     $ ./bin/roster-migrate --jid test@jabber.org -w import -f export.txt
 
 If you would like yo you stdin as source of roster you should define a password as `-w` optional argument
- or put it as first line inside `export.txt` and yous `... import < export.txt`
+ or put it as first line inside `export.txt` and use `... import < export.txt`
 
 
 Import/export format
