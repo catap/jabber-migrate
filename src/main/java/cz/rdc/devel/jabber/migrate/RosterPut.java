@@ -38,6 +38,16 @@ public class RosterPut {
         description = "Roster file in Adium (blist.xml) format")
     private boolean adiumFormat;
 
+    @Parameter(names = {"--sendSubscriptionRequest"},
+        description = "Send subscription request to added contacts if it I can't see his presence")
+    private boolean sendSubscriptionRequest;
+
+    @Parameter(names = {"--sendSubscriptionRequestInterval"},
+        description = "Interval between send subscription request in seconds. Zero means no interval." +
+            " eJabberd has default limit for about 1 subscriptions/minute/user (5 presence stanzas in any direction per JID)," +
+            " keep it below by default")
+    private int sendSubscriptionRequestInterval = 60;
+
     /**
      * Imports contact to the new roster.
      * It first reads all contacts to ensure their validity.
@@ -76,14 +86,15 @@ public class RosterPut {
 
         waitForRosterUpdate(roster, contacts);
 
-        if (!modified.isEmpty()) {
+        if (!modified.isEmpty() && sendSubscriptionRequest) {
             for (BareJid jid : modified) {
                 RosterEntry entry = roster.getEntry(jid);
                 if (!entry.canSeeHisPresence() || !isSubscriptionPreApprovalSupported) {
                     LOG.info("Sending auth request to: {}", jid.toString());
                     roster.sendSubscriptionRequest(jid);
-                    // if we're send presence sleep for 1 seconds to overstep antispam on major hosting
-                    Thread.sleep(1000);
+                    if (sendSubscriptionRequestInterval > 0) {
+                        Thread.sleep(sendSubscriptionRequestInterval * 1000);
+                    }
                 }
             }
         }

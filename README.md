@@ -38,6 +38,16 @@ Usage
                 Default: false
               -f, --file
                 Roster file path by default is stdout/stdin
+              --sendSubscriptionRequest
+                Send subscription request to added contacts if it I can't see his
+                presence
+                Default: false
+              --sendSubscriptionRequestInterval
+                Interval between send subscription request in seconds. Zero means
+                no interval. eJabberd has default limit for about 1
+                subscriptions/minute/user (5 presence stanzas in any direction per
+                JID), keep it below by default
+                Default: 60
     
         export      Export roster into specified file
           Usage: export [options]
