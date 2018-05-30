@@ -117,7 +117,11 @@ Unreachable JID means:
  - your server's returned error that recipient-unavailable
  - domain is reachable and script can register JID on it
 
+Be patient! This test request a lot of time. The worst case is about 5 second per JID.
+
 Origin
 ------
 
-This project is a fork of http://sourceforge.net/projects/migrate/ by [Ivo Danihelka](https://github.com/fidlej).
+This project is a fork of
+ - https://github.com/jirutka/jabber-migrate by [Jakub Jirutka](https://github.com/jirutka);
+ - http://sourceforge.net/projects/migrate/ by [Ivo Danihelka](https://github.com/fidlej).
