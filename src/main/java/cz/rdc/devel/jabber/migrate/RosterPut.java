@@ -89,7 +89,8 @@ public class RosterPut {
         if (!modified.isEmpty() && sendSubscriptionRequest) {
             for (BareJid jid : modified) {
                 RosterEntry entry = roster.getEntry(jid);
-                if (!entry.canSeeHisPresence() || !isSubscriptionPreApprovalSupported) {
+                // another connected client may remove this jid from roster at same time
+                if (entry != null && !entry.canSeeHisPresence() || !isSubscriptionPreApprovalSupported) {
                     LOG.info("Sending auth request to: {}", jid.toString());
                     roster.sendSubscriptionRequest(jid);
                     if (sendSubscriptionRequestInterval > 0) {
