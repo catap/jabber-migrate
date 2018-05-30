@@ -5,6 +5,7 @@ import com.beust.jcommander.IStringConverter;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import org.jivesoftware.smack.*;
+import org.jivesoftware.smack.parsing.ParsingExceptionCallback;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.stringencoder.Base64;
@@ -136,8 +137,9 @@ public class XMPPConnectionFactory {
             .setDebuggerEnabled(debug)
             .build();
 
-        AbstractXMPPConnection conn = new XMPPTCPConnection(config)
-            .connect();
+        AbstractXMPPConnection conn = new XMPPTCPConnection(config);
+        conn.setParsingExceptionCallback(stanzaData -> LOG.warn("Can't parse: " + stanzaData.getContent()));
+        conn.connect();
 
         try {
             conn.login(jid.getLocalpartOrNull(), password);
@@ -163,7 +165,10 @@ public class XMPPConnectionFactory {
             .setDebuggerEnabled(debug)
             .build();
 
-        return new XMPPTCPConnection(config)
-            .connect();
+        AbstractXMPPConnection conn = new XMPPTCPConnection(config);
+        conn.setParsingExceptionCallback(stanzaData -> LOG.warn("Can't parse: " + stanzaData.getContent()));
+        conn.connect();
+
+        return conn;
     }
 }
