@@ -18,6 +18,9 @@ Usage
 
     Usage: roster-migrate [options] [command] [command options]
       Options:
+        --debug
+          dump all send and received stanzas
+          Default: false
         --help, -H
           Display help
         --host, --H

@@ -115,6 +115,10 @@ public class XMPPConnectionFactory {
         description = "Port that will be used when host is overwritten from SRV records")
     public int port = 5222;
 
+    @Parameter(names = {"--debug"},
+        description = "dump all send and received stanzas")
+    public boolean debug;
+
     public AbstractXMPPConnection connectAndLogin() throws IOException, InterruptedException, XMPPException, SmackException {
         XMPPTCPConnectionConfiguration.Builder builder = XMPPTCPConnectionConfiguration.builder();
 
@@ -129,6 +133,7 @@ public class XMPPConnectionFactory {
             .setSecurityMode(ConnectionConfiguration.SecurityMode.ifpossible)
             .setHostnameVerifier((s, sslSession) -> true)
             .setCustomSSLContext(sslContext)
+            .setDebuggerEnabled(debug)
             .build();
 
         AbstractXMPPConnection conn = new XMPPTCPConnection(config)
@@ -149,12 +154,13 @@ public class XMPPConnectionFactory {
         }
     }
 
-    public static AbstractXMPPConnection connect(String serviceName) throws IOException, InterruptedException, XMPPException, SmackException {
+    public AbstractXMPPConnection connect(String serviceName) throws IOException, InterruptedException, XMPPException, SmackException {
         XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
             .setXmppDomain(serviceName)
             .setSecurityMode(ConnectionConfiguration.SecurityMode.ifpossible)
             .setHostnameVerifier((s, sslSession) -> true)
             .setCustomSSLContext(sslContext)
+            .setDebuggerEnabled(debug)
             .build();
 
         return new XMPPTCPConnection(config)

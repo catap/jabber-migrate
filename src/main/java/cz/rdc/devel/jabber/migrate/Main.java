@@ -18,7 +18,7 @@ public class Main {
         Main main = new Main();
         XMPPConnectionFactory connectionFactory = new XMPPConnectionFactory();
         RosterPut rosterPut = new RosterPut();
-        RosterGet rosterGet = new RosterGet();
+        RosterGet rosterGet = new RosterGet(connectionFactory);
 
         JCommander jct = JCommander.newBuilder()
             .addObject(main)

@@ -41,6 +41,12 @@ public class RosterGet {
         description = "Creates a list of users that can't be reach anymore")
     private boolean onlyUnreachable;
 
+    final XMPPConnectionFactory connectionFactory;
+
+    public RosterGet(XMPPConnectionFactory connectionFactory) {
+        this.connectionFactory = connectionFactory;
+    }
+
     @SuppressWarnings("unchecked")
     public void work(XMPPConnection con) throws Exception {
         Roster roster = Roster.getInstanceFor(con);
@@ -82,7 +88,7 @@ public class RosterGet {
         }
     }
 
-    private static boolean isJidReachable(XMPPConnection con, BareJid jid, Set<Domainpart> availableDomain, Set<Domainpart> unavailableDomain) throws SmackException.NotConnectedException, InterruptedException {
+    private boolean isJidReachable(XMPPConnection con, BareJid jid, Set<Domainpart> availableDomain, Set<Domainpart> unavailableDomain) throws SmackException.NotConnectedException, InterruptedException {
         if (unavailableDomain.contains(jid.getDomain())) {
             return false;
         }
@@ -195,7 +201,7 @@ public class RosterGet {
         // if it happened => remove registered jid and marked to remove from our roster
         AbstractXMPPConnection subConn = null;
         try {
-            subConn = XMPPConnectionFactory.connect(jid.getDomain().toString());
+            subConn = connectionFactory.connect(jid.getDomain().toString());
             AccountManager accountManager = AccountManager.getInstance(subConn);
             if (accountManager.isSupported()) {
                 // don't create account that spammers may use
