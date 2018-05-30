@@ -3,9 +3,11 @@ package cz.rdc.devel.jabber.migrate;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.jivesoftware.smack.*;
+import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterGroup;
+import org.jivesoftware.smack.roster.RosterListener;
 import org.jivesoftware.smack.util.DNSUtil;
 import org.jivesoftware.smack.util.dns.HostAddress;
 import org.jivesoftware.smackx.iqregister.AccountManager;
@@ -14,6 +16,7 @@ import org.jivesoftware.smackx.ping.PingManager;
 import org.jivesoftware.smackx.time.EntityTimeManager;
 import org.jivesoftware.smackx.vcardtemp.VCardManager;
 import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.parts.Domainpart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +80,7 @@ public class RosterGet {
 
             if (onlyUnreachable) {
                 LOG.info("Checking {}, {}/{}", jid, passed, rosterEntries.size());
-                if (!isJidReachable(con, jid, availableDomain, unavailableDomain)) {
+                if (!isJidReachable(con, roster, jid, availableDomain, unavailableDomain)) {
                     contact.setRemove(true);
                 } else {
                     continue;
@@ -88,12 +91,21 @@ public class RosterGet {
         }
     }
 
-    private boolean isJidReachable(XMPPConnection con, BareJid jid, Set<Domainpart> availableDomain, Set<Domainpart> unavailableDomain) throws SmackException.NotConnectedException, InterruptedException {
+    private boolean isJidReachable(XMPPConnection con, Roster roster, BareJid jid, Set<Domainpart> availableDomain, Set<Domainpart> unavailableDomain) throws SmackException.NotConnectedException, InterruptedException {
         if (unavailableDomain.contains(jid.getDomain())) {
             return false;
         }
 
         try {
+            Presence presence = roster.getPresence(jid);
+            if (presence.getType() == Presence.Type.error) {
+                if (presence.getError() != null) {
+                    throw new XMPPException.XMPPErrorException(presence, presence.getError());
+                }
+                LOG.info("JID: " + jid.toString() + " has presence error: " + presence.toString());
+                return false;
+            }
+
             // try send ping to jid
             try {
                 if (PingManager.getInstanceFor(con).ping(jid)) {
