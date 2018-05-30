@@ -14,6 +14,7 @@ public class Contact {
     private String nickname;
     private String user;
     private Set<String> groups = new HashSet<>();
+    private String comment;
 
     public void addGroup(String group) {
         groups.add(group);
@@ -41,6 +42,12 @@ public class Contact {
     public void setRemove(boolean remove) {
         this.remove = remove;
     }
+    public String getComment() {
+        return comment;
+    }
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
 
     @Override
     public String toString() {
@@ -53,6 +60,7 @@ public class Contact {
         }
         return (remove ? "-" : "+")
             + ";" + (nickname == null ? "" : nickname)
-            + ";" + user + ";[" + sb + "]";
+            + ";" + user + ";[" + sb + "]"
+            + (comment == null ? "" : ";" + comment);
     }
 }

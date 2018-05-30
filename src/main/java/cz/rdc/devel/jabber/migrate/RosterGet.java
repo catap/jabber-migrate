@@ -80,20 +80,24 @@ public class RosterGet {
 
             if (onlyUnreachable) {
                 LOG.info("Checking {}, {}/{}", jid, passed, rosterEntries.size());
-                if (!isJidReachable(con, roster, jid, availableDomain, unavailableDomain)) {
-                    contact.setRemove(true);
-                } else {
+                String reason = isJidReachable(con, roster, jid, availableDomain, unavailableDomain);
+                if (reason == null) {
                     continue;
                 }
+                contact.setComment(reason);
+                contact.setRemove(true);
             }
 
             out.println(contact);
         }
     }
 
-    private boolean isJidReachable(XMPPConnection con, Roster roster, BareJid jid, Set<Domainpart> availableDomain, Set<Domainpart> unavailableDomain) throws SmackException.NotConnectedException, InterruptedException {
+    /**
+     * Returns a reason why it isn't reachable or null
+     */
+    private String isJidReachable(XMPPConnection con, Roster roster, BareJid jid, Set<Domainpart> availableDomain, Set<Domainpart> unavailableDomain) throws SmackException.NotConnectedException, InterruptedException {
         if (unavailableDomain.contains(jid.getDomain())) {
-            return false;
+            return "Domain unavailable";
         }
 
         try {
@@ -102,14 +106,13 @@ public class RosterGet {
                 if (presence.getError() != null) {
                     throw new XMPPException.XMPPErrorException(presence, presence.getError());
                 }
-                LOG.info("JID: " + jid.toString() + " has presence error: " + presence.toString());
-                return false;
+                return "presence error: " + presence.toString();
             }
 
             // try send ping to jid
             try {
                 if (PingManager.getInstanceFor(con).ping(jid)) {
-                    return true;
+                    return null;
                 }
             } catch (SmackException.NoResponseException ignore) {
 
@@ -118,7 +121,7 @@ public class RosterGet {
             try {
                 // does jid support vcard?
                 if (VCardManager.getInstanceFor(con).isSupported(jid)) {
-                    return true;
+                    return null;
                 }
             } catch (SmackException.NoResponseException ignore) {
 
@@ -127,7 +130,7 @@ public class RosterGet {
             try {
                 // does jid support version?
                 if (VersionManager.getInstanceFor(con).isSupported(jid)) {
-                    return true;
+                    return null;
                 }
             } catch (SmackException.NoResponseException ignore) {
 
@@ -136,7 +139,7 @@ public class RosterGet {
             try {
                 // does jid support time?
                 if (EntityTimeManager.getInstanceFor(con).isTimeSupported(jid)) {
-                    return true;
+                    return null;
                 }
             } catch (SmackException.NoResponseException ignore) {
 
@@ -146,10 +149,10 @@ public class RosterGet {
             switch (e.getXMPPError().getCondition()) {
                 case remote_server_not_found:
                     unavailableDomain.add(jid.getDomain());
-                    return false;
+                    return "Domain unavailable";
 
                 case recipient_unavailable:
-                    return false;
+                    return "Recipient unavailable";
 
                 case subscription_required:
                 case service_unavailable:
@@ -203,7 +206,7 @@ public class RosterGet {
             if (!reached) {
                 // I can't reach this domain at all
                 unavailableDomain.add(jid.getDomain());
-                return false;
+                return "Domain unavailable";
             } else {
                 availableDomain.add(jid.getDomain());
             }
@@ -222,8 +225,7 @@ public class RosterGet {
 
                 subConn.login(jid.getLocalpartOrNull().asUnescapedString(), password);
                 accountManager.deleteAccount();
-                LOG.info("JID {} is free to register!", jid.toString());
-                return false;
+                return "JID is free to register!";
             }
 
         } catch (XMPPException.XMPPErrorException e) {
@@ -244,6 +246,6 @@ public class RosterGet {
             }
         }
 
-        return true;
+        return null;
     }
 }

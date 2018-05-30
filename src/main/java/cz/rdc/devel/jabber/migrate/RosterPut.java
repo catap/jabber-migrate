@@ -134,7 +134,7 @@ public class RosterPut {
 
         String line;
         while ((line = in.readLine()) != null) {
-            String[] parts = Re.deformat("([+-]);([^;]*);([^;]+);\\[([^\\]]*)\\]", line);
+            String[] parts = Re.deformat("([+-]);([^;]*);([^;]+);\\[([^\\]]*)\\](;.*)?", line);
             Contact contact = new Contact();
             contact.setRemove("-".equals(parts[0]));
             contact.setNickname("".equals(parts[1]) ? null : parts[1]);
@@ -146,6 +146,8 @@ public class RosterPut {
                     contact.addGroup(group);
                 }
             }
+
+            contact.setComment(parts[4]);
 
             contacts.add(contact);
         }

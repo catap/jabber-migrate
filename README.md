@@ -80,12 +80,13 @@ The exported format contains one line for every contact.
 
 Format:
 
-    <isRemove>;<nickname>;<user>;[<groups>]
+    <isRemove>;<nickname>;<user>;[<groups>];comment
 
 * isRemove ... `-` to remove contact, `+` to add contact
 * nickname ... contact nickname
 * user     ... contact ID
 * groups   ... comma-separated list of groups
+* comment  ... is optional segment that contains some comments
 
 Examples:
 
